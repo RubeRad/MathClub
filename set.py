@@ -1,5 +1,7 @@
 #! /usr/bin/python3
 
+from random import randrange
+
 nnicks={'1':1, '2':2, '3':3}
 tnicks={'s':'solid', 't':'striped', 'o':'open'}
 cnicks={'r':'red',   'g':'green',   'p':'purple'}
@@ -39,7 +41,7 @@ class SetCard():
         return s.code[1] in tnicks and s.code[2] in cnicks and s.code[3] in snicks
 
     def describe(s):
-        if s.number==1:
+        if s.number()==1:
             print(s.number(), s.texture(), s.color(), s.shape())
         else:
             print(s.number(), s.texture(), s.color(), s.shape()+'s')
@@ -76,6 +78,22 @@ def has_a_set(cards):
     if sets: return True
     # else
     return False
+
+def deck(shuffle=True):
+    cards = []
+    for    n in nnicks.keys():
+     for   t in tnicks.keys():
+      for  c in cnicks.keys():
+       for s in snicks.keys():
+        cards.append(SetCard(n+t+c+s))
+
+    if shuffle:
+        n = len(cards)
+        for i in range(n):    # swap every card
+            j = randrange(n)  # with a random card
+            cards[i],cards[j] = cards[j],cards[i]
+
+    return cards
 
 
 #######################
@@ -118,6 +136,31 @@ if __name__ == '__main__':
 
             s.assertTrue( is_a_set(  osrr, ttgo, tops))
             s.assertTrue(has_a_set( [osrr, ttgo, tops] ))
+
+            cards = deck()
+            s.assertEqual(len(cards), 3*3*3*3) # 81
+
+        def testHistogram(s):
+            counts = [0]*82
+            for i in range(100):
+                cards = deck()
+                deal = []
+                while not has_a_set(deal):
+                    deal.append(cards.pop())
+                verbose = False
+                if verbose:
+                    ijks = find_sets(deal)
+                    print(len(deal),"cards dealt, set(s) found:",len(ijks))
+                    for ijk in ijks:
+                        print("Set found:")
+                        deal[ijk[0]].describe()
+                        deal[ijk[1]].describe()
+                        deal[ijk[2]].describe()
+                counts[len(deal)] += 1
+
+            while counts[-1]==0: counts.pop()
+            for i in range(3,len(counts)):
+                print(str(i)+":", counts[i])
 
 
     unittest.main()
