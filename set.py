@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#! /usr/bin/env python3
 
 from random import randrange
 
@@ -95,6 +95,38 @@ def deck(shuffle=True):
 
     return cards
 
+def histogram(counts, maxchars=70):
+    histr = ''
+    while counts[-1] == 0: counts.pop()  # get rid of empties at the end
+    firsti = 0
+    for i in range(len(counts)):
+        if counts[i]==0:
+            firsti = i+1
+        else:
+            break
+
+    if firsti>=len(counts):
+        return ""
+
+    maxcount = counts[firsti]
+    for c in counts:
+        if c > maxcount:
+            maxcount = c
+
+    scale = 1.0
+    if maxcount > maxchars:
+        scale = maxchars/maxcount
+
+
+    for i in range(firsti, len(counts)):
+        if i<10:
+            histr += ' '
+        nchar = round(counts[i] * scale)
+        histr += str(i) + ': ' + '#' * nchar + ' ' + str(counts[i]) + '\n'
+    return histr
+
+
+
 
 #######################
 ##### UNIT TESTS ######
@@ -158,9 +190,7 @@ if __name__ == '__main__':
                         deal[ijk[2]].describe()
                 counts[len(deal)] += 1
 
-            while counts[-1]==0: counts.pop()
-            for i in range(3,len(counts)):
-                print(str(i)+":", counts[i])
+            print(histogram(counts))
 
 
     unittest.main()
