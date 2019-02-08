@@ -125,6 +125,15 @@ def histogram(counts, maxchars=70):
         histr += str(i) + ': ' + '#' * nchar + ' ' + str(counts[i]) + '\n'
     return histr
 
+def mean(counts):
+    sum = 0
+    num = 0
+    for i in range(len(counts)):
+        num += counts[i]
+        sum += counts[i]*i
+    if num==0:
+        return None
+    return sum/num
 
 
 
