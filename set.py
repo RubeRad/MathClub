@@ -60,21 +60,28 @@ def is_a_set(one, two, three):
     return three == one.third(two)
 
 # returns 3-tuples the _indices_ of any sets among these cards
-def find_sets(cards):
+def find_sets(cards, force_last=False, quit_after_one=False):
     n = len(cards)
     sets = [];
     for i in range(0,n):
         for j in range(i+1,n):
-            for k in range(j+1,n):
+            kmin = j+1
+            kmax = n
+            if force_last:
+                kmin = n-1 
+            for k in range(kmin, kmax):
                 if (is_a_set(cards[i], cards[j], cards[k])):
                     sets.append( (i,j,k) )
+                    if quit_after_one:
+                        return sets
+
     if len(sets):
         return sets
     # else
     return None
 
-def has_a_set(cards):
-    sets = find_sets(cards)
+def has_a_set(cards, must_include_last=False):
+    sets = find_sets(cards, force_last=must_include_last, quit_after_one=True)
     if sets: return True
     # else
     return False
@@ -97,16 +104,17 @@ def deck(shuffle=True):
 
 def histogram(counts, maxchars=70):
     histr = ''
-    while counts[-1] == 0: counts.pop()  # get rid of empties at the end
-    firsti = 0
-    for i in range(len(counts)):
-        if counts[i]==0:
-            firsti = i+1
-        else:
-            break
 
-    if firsti>=len(counts):
-        return ""
+    firsti = 0
+    while firsti<len(counts) and counts[firsti]==0:
+        firsti += 1
+    # now firsti is the index of the first nonzero
+
+    lasti = len(counts)-1  # avoid empties at the end
+    while lasti>=0 and counts[lasti]==0:
+        lasti -= 1
+    # now lasti is the index of the last nonzero
+    lasti += 1 # bump back up one
 
     maxcount = counts[firsti]
     for c in counts:
@@ -118,11 +126,12 @@ def histogram(counts, maxchars=70):
         scale = maxchars/maxcount
 
 
-    for i in range(firsti, len(counts)):
+    for i in range(firsti, lasti):
         if i<10:
             histr += ' '
         nchar = round(counts[i] * scale)
         histr += str(i) + ': ' + '#' * nchar + ' ' + str(counts[i]) + '\n'
+
     return histr
 
 def mean(counts):
@@ -181,25 +190,30 @@ if __name__ == '__main__':
             cards = deck()
             s.assertEqual(len(cards), 3*3*3*3) # 81
 
-        def testHistogram(s):
-            counts = [0]*82
+        def testShortcuts(s):
             for i in range(100):
                 cards = deck()
                 deal = []
-                while not has_a_set(deal):
+                no_sets = True # with an empty deal!
+                while no_sets:
                     deal.append(cards.pop())
-                verbose = False
-                if verbose:
-                    ijks = find_sets(deal)
-                    print(len(deal),"cards dealt, set(s) found:",len(ijks))
-                    for ijk in ijks:
-                        print("Set found:")
-                        deal[ijk[0]].describe()
-                        deal[ijk[1]].describe()
-                        deal[ijk[2]].describe()
-                counts[len(deal)] += 1
-
-            print(histogram(counts))
+                    all_sets    = find_sets(deal) # full search, trusted result
+                    sets_w_last = find_sets(deal, force_last=True)
+                    if all_sets:
+                        stophere=1
+                    sets_max_1  = find_sets(deal, quit_after_one=True)
+                    sets_last_1 = find_sets(deal, force_last=True, quit_after_one=True)
+                    if all_sets: # not None
+                        s.assertEqual(sets_w_last, all_sets)
+                        s.assertEqual(len(sets_max_1), 1)
+                        s.assertEqual(len(sets_last_1), 1)
+                        s.assertEqual(sets_max_1, sets_last_1)
+                        s.assertEqual(sets_max_1[0], sets_w_last[0])
+                        no_sets = False # go shuffle a new deal
+                    else: # all_sets is None
+                        s.assertIsNone(sets_w_last)
+                        s.assertIsNone(sets_max_1)
+                        s.assertIsNone(sets_last_1)
 
 
     unittest.main()
